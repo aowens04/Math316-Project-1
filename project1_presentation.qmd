@@ -1,0 +1,32 @@
+---
+title: "CO2 Data"
+author: "Amaya Owens, Paige Hill, Lauren McIntosh"
+format: 
+ revealjs:
+  theme: night
+---
+
+# Original Dataset
+* 80 columns and 43,746 rows
+* Many rows were missing values. The smallest number of non-null values was around 2000
+* Data on CO2 levels for 162 countries and the world as a whole
+* CO2 output for different sectors like trade, oil, gas, coal, and cement 
+* Date ranges were from 1850 - 2023
+
+# Trimmed Dataset
+* 5 columns and 10,980 rows
+* years were limited from 1950-2023 to use more accurate and relevant data
+* all NA values were dropped from the columns used
+
+# New Columns
+* Year
+* Name
+* GDP (Gross Domestic Product) 
+* Population
+* CO2 including LUC (Land Use Change)
+* Temperature change from CO2
+
+# What we hope to answer
+* Is a higher GDP related to a higher level of CO2 emissions?
+* Are the countries with the greatest CO2 emissions the ones experiencing the greatest temperature change from CO2?
+* Does a higher population correlate to a higher level of CO2 emissions?
