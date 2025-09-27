@@ -18,15 +18,31 @@ format:
 * years were limited from 1950-2023 to use more accurate and relevant data
 * all NA values were dropped from the columns used
 
-# New Columns
-* Year
-* Name
-* GDP (Gross Domestic Product) 
-* Population
-* CO2 including LUC (Land Use Change)
-* Temperature change from CO2
 
-# What we hope to answer
+# Basic Information
+```{python}
+#| label: info
+#| include: true
+
+import pandas as pd
+
+df = pd.read_csv("./Data/Data.csv")
+
+# create subset of data
+df.dropna(subset=["year", "Name", "gdp", "population", "temperature_change_from_co2", "co2_including_luc"],inplace=True)
+df2=df[["year", "Name", "gdp", "population", "co2_including_luc", "temperature_change_from_co2"]].query("year > 1950")
+
+# print basic info
+print("shape: ", df2.shape)
+print("\n")
+print(df2.info())
+
+```
+# Summary Statistics
+
+# Key Distributions
+
+# Questions
 * Is a higher GDP related to a higher level of CO2 emissions?
 * Are the countries with the greatest CO2 emissions the ones experiencing the greatest temperature change from CO2?
 * Does a higher population correlate to a higher level of CO2 emissions?
