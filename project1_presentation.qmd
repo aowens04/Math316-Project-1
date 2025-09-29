@@ -4,22 +4,25 @@ author: "Amaya Owens, Paige Hill, Lauren McIntosh"
 format: 
  revealjs:
   theme: night
+  transition: slide
+  hash: true
 ---
 
-# Original Dataset
+## Original Dataset
 * 80 columns and 43,746 rows
-* Many rows were missing values. The smallest number of non-null values was around 2000
+* Many rows were missing values
+	- The smallest number of non-null values was around 2,000 rows
 * Data on CO2 levels for 162 countries and the world as a whole
 * CO2 output for different sectors like trade, oil, gas, coal, and cement 
 * Date ranges were from 1850 - 2023
 
-# Trimmed Dataset
+## Trimmed Dataset
 * 5 columns and 10,980 rows
-* years were limited from 1950-2023 to use more accurate and relevant data
-* all NA values were dropped from the columns used
+* Dates were constrained to 1950-2023 to data was accurate and relevant
+* All N/A values were dropped from the columns used
 
 
-# Basic Information
+## Basic Information
 ```{python}
 #| label: info
 #| include: true
@@ -38,11 +41,50 @@ print("\n")
 print(df2.info())
 
 ```
-# Summary Statistics
 
-# Key Distributions
+## Statistical Measures 
+| Measure | GDP | Population |CO2 (MtCO2) | Temp (°C) |
+|---------|-----|------------|------------|-----------|
+| **Minimum** | $55.43M | 24,304 | -100.0 | 0.00 |
+| **Median** | $33.42B | 7.09M | 32.0 | 0.00 |
+| **Maximum** | $130.11T | 8.02B | 40,936.0 | 1.16 |
+| **Mean** | $423.03B | 40.88M | 220.0 | 0.01 |
+| **Std Dev** | $3.55T | 474.16M | 2,641.11 | 0.06 |
 
-# Questions
+## Top 10 CO2 Emitters {.smaller}
+:::: {.columns}
+::: {.column width="50%"}
+
+| Rank | Country | Total (MtCO2) | % Global |
+|------|---------|---------------|----------|
+| 1 | **United States** | 355,709 | 17.5% |
+| 2 | **China** | 320,720 | 15.8% |
+| 3 | **Russia** | 140,019 | 6.9% |
+| 4 | **Brazil** | 118,200 | 5.8% |
+| 5 | **India** | 80,511 | 4.0% |
+| 6 | **Japan** | 66,190 | 3.3% |
+| 7 | **Germany** | 63,937 | 3.1% |
+| 8 | **Indonesia** | 60,728 | 3.0% |
+| 9 | **Canada** | 48,840 | 2.4% |
+| 10 | **United Kingdom** | 41,265 | 2.0% |
+
+:::
+:::{.column width="10%"}
+:::
+
+::: {.column width="40%" .smaller}
+**Key Insights:**
+
+* **Top 10:** 63.7% of global emissions
+* **Historical leader:** USA (355,709 MtCO2)
+* **Current leader:** China (11,606 MtCO2 recent)
+
+:::
+::::
+
+## Key Distributions
+
+## Questions
 * Is a higher GDP related to a higher level of CO2 emissions?
 * Are the countries with the greatest CO2 emissions the ones experiencing the greatest temperature change from CO2?
-* Does a higher population correlate to a higher level of CO2 emissions?
+* Does a higher population correlate with greater CO2 emissions?
