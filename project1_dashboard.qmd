@@ -77,24 +77,24 @@ dict(
 ```{python}
 #| code-fold: true
 source = pd.DataFrame({
-    'x' : world_df['year'],
+    'x' : pd.to_datetime(world_df['year'], format='%Y'),
     'y' : world_df['temperature_change_from_co2']
-
 })
 
-
-base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4,).encode(
+base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4).encode(
     x=alt.X(
-            "x:O",
-            title="Year",
-        ),
+        "x:T",
+        title="Year",
+        axis=alt.Axis(format='%Y', tickCount='year')
+    ),
     y=alt.Y('y', title= 'Temp (°C)'),
 )
 
-peak_line = alt.Chart(pd.DataFrame({'y': [2]})).mark_rule(color="#e74c3c", strokeWidth=4).encode(y='y')
+peak_line = alt.Chart(pd.DataFrame({'y': [2]})).mark_rule(color="#e74c3c", strokeWidth=4).encode(
+    y='y',
+)
 
-world_chart = base + peak_line
-world_chart.title = "Global Temperature vs Time"
+world_chart = (base + peak_line).properties(title="Global Temperature Change vs Time").interactive()
 world_chart
 ```
 
