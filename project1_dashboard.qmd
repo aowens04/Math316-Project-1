@@ -21,6 +21,7 @@ jupyter:
 import pandas as pd
 import altair as alt
 import numpy as np
+from great_tables import GT
 alt.renderers.enable('html')
 
 df = pd.read_csv("Data.csv")
@@ -275,7 +276,11 @@ avg_co2_by_country = avg_co2_by_country[avg_co2_by_country["Name"] != "World"]
 avg_co2_by_country = avg_co2_by_country.sort_values(by="co2_per_capita", ascending=False)
 
 #print(avg_co2_by_country.head(10))
-print(avg_co2_by_country)
+#print(avg_co2_by_country)
+avg_country_table = GT(avg_co2_by_country.head(15))
+avg_country_table.fmt_number(columns="co2_per_capita", compact=True).cols_label(co2_per_capita="CO2 Per Capita").tab_options(
+        column_labels_background_color="#3498db"
+    ).cols_align(columns="co2_per_capita", align="center" )
 
 ```
 
@@ -285,27 +290,24 @@ print(avg_co2_by_country)
 
 # Load the CO2 emissions data
 df_co2_pivot = pd.read_csv("Data.csv")
-
-# Apply filter
+# Apply filters
 # 1. Filter by year: 1950-2023
 df_filtered_pivot = df_co2_pivot[(df_co2_pivot["year"] >= 1950) & (df_co2_pivot["year"] <= 2023)].copy()
-
 # 2. Filter by Description: Only 'Country'
 df_filtered_pivot = df_filtered_pivot[df_filtered_pivot["Description"] == "Country"].copy()
-
 # 3. Filter by Name: Exclude strings ending with '(GCP)'
 df_filtered_pivot = df_filtered_pivot[~df_filtered_pivot["Name"].str.endswith("(GCP)", na=False)].copy()
-
 # 4. Remove rows with NaN values in our key columns
 df_filtered_pivot = df_filtered_pivot.dropna(subset=["Name", "co2", "population", "gdp"]).copy()
 
-# Create pivot table with Name as rows and co2, population, gdp as columns
-# Values represent the mean of the data
-pivot_table = df_filtered_pivot.groupby("Name").agg({
-    "co2": "mean",
-    "population": "mean", 
-    "gdp": "mean"
-}).round(2)
+# Create pivot table with Name as rows and co2, population, gdp as values
+# Using pivot_table instead of groupby
+pivot_table = pd.pivot_table(
+    df_filtered_pivot,
+    values=["co2", "population", "gdp"],
+    index="Name",
+    aggfunc="mean"
+).round(2)
 
 # Sort by CO2 emissions (highest to lowest)
 pivot_table = pivot_table.sort_values("co2", ascending=False)
@@ -314,8 +316,9 @@ pivot_table = pivot_table.sort_values("co2", ascending=False)
 top_10_pivot = pivot_table.head(10)
 
 # Create display version with cleaned up labels
-display_table = top_10_pivot.copy()
-display_table.columns = ["Avg MtCO2", "Avg Population", "Avg GDP"]
+formatted_pivot_table = top_10_pivot.copy()
+formatted_pivot_table.reset_index(inplace=True)
+formatted_pivot_table.columns = ["Name","Avg MtCO2", "Avg GDP", "Avg Population"]
 
 # Format for better display
 def format_number(x):
@@ -346,14 +349,19 @@ def format_co2(x):
     else:
         return f"{x:,.1f}"
 
-print("PIVOT TABLE: Top 10 CO2 Emitting Countries (1950-2023)")
-print("="*80)
-print(f"{'Country':<25} {'Avg MtCO2':<15} {'Avg Population':<18} {'Avg GDP':<15}")
-print("-"*80)
 
-for country, row in display_table.iterrows():
-    co2_val = format_co2(row["Avg MtCO2"])
-    pop_val = format_population(row["Avg Population"])
-    gdp_val = format_number(row["Avg GDP"])
-    print(f"{country:<25} {co2_val:<15} {pop_val:<18} {gdp_val:<15}")
+# Apply formatting to each column
+formatted_pivot_table["Avg MtCO2"] = formatted_pivot_table["Avg MtCO2"].apply(format_co2)
+formatted_pivot_table["Avg GDP"] = formatted_pivot_table["Avg GDP"].apply(format_number)
+formatted_pivot_table["Avg Population"] = formatted_pivot_table["Avg Population"].apply(format_population)
+
+
+# Now formatted_pivot_table contains the formatted data as a DataFrame
+# You can display it with:
+#print(formatted_pivot_table)
+
+display_table = GT(formatted_pivot_table)
+display_table.tab_header(title="Top 10 CO2 Emitting Countries (1950-2022)").tab_options(
+        heading_background_color="#3498db"
+    ).opt_horizontal_padding(scale = 2).cols_align(align="center")
 ```
