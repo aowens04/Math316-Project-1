@@ -137,7 +137,7 @@ co2_chart = (
         tooltip=[
             alt.Tooltip("year:O", title="Year"),
             alt.Tooltip("co2:Q", title="Avg CO2 per Country (MtCO2)", format=",.1f"),
-            alt.Tooltip("gdp:Q", title="Avg GDP per Country (USD)", format="$.2s"),
+            alt.Tooltip("gdp:Q", title="Avg GDP per Country (USD)", format="$,.0f"),
         ],
     )
 )
@@ -159,12 +159,12 @@ gdp_chart = (
             "gdp:Q",
             title="Average GDP per Country (USD)",
             scale=alt.Scale(zero=False),
-            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format="$.1s"),
+            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format=".0f", labelExpr="'$' + datum.value/1000000000 + 'B'"),
         ),
         tooltip=[
             alt.Tooltip("year:O", title="Year"),
             alt.Tooltip("co2:Q", title="Avg CO2 per Country (MtCO2)", format=",.1f"),
-            alt.Tooltip("gdp:Q", title="Avg GDP per Country (USD)", format="$.2s"),
+            alt.Tooltip("gdp:Q", title="Avg GDP per Country (USD)", format="$,.0f"),
         ],
     )
 )
