@@ -50,14 +50,14 @@ dict(
 
 ```{python}
 #| content: valuebox
-#| title: "Wost CO2 Emitter in 2022:"
+#| title: "Wost CO2 Emission Per Capita in 2022:"
 #| icon: "exclamation-lg"
 #| color: "danger"
 by_emissions = final_df.sort_values(by="co2_per_capita", ascending = False).query("year == 2022")
 country = by_emissions.iat[0,1]
 per_capita = by_emissions.iat[0,4]
 dict(
-  value = f"{country}: {per_capita} MtCO2 per capita"
+  value = f"{country}"
 )
 ```
 
@@ -68,7 +68,7 @@ dict(
 #| color: "secondary"
 
 dict(
-  value = "2 C"
+  value = "2 °C"
 )
 ```
 
@@ -82,15 +82,18 @@ source = pd.DataFrame({
 })
 
 
-base = alt.Chart(source).mark_line().encode(
-    x=alt.X('x', title='Years'),
-    y=alt.Y('y', title= 'Temp (°C)')
+base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4,).encode(
+    x=alt.X(
+            "x:O",
+            title="Year",
+        ),
+    y=alt.Y('y', title= 'Temp (°C)'),
 )
 
-peak_line = alt.Chart(
-    pd.DataFrame({'y': [2]})).mark_rule(color='red').encode(y='y')
+peak_line = alt.Chart(pd.DataFrame({'y': [2]})).mark_rule(color="#e74c3c", strokeWidth=4).encode(y='y')
 
 world_chart = base + peak_line
+world_chart.title = "Global Temperature vs Time"
 world_chart
 ```
 
@@ -159,7 +162,7 @@ gdp_chart = (
             "gdp:Q",
             title="Average GDP per Country (USD)",
             scale=alt.Scale(zero=False),
-            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format=".0f", labelExpr="'$' + datum.value/1000000000 + 'B'"),
+            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format="$.0f", 		    labelExpr="'$' + datum.value/1000000000 + 'B'"),
         ),
         tooltip=[
             alt.Tooltip("year:O", title="Year"),
@@ -179,7 +182,6 @@ gdp_co2_chart = (
         title=alt.TitleParams(
             text="Average GDP vs CO2 per Country (1950-2022)",
             fontSize=16,
-            anchor="start",
         ),
     )
 )
@@ -190,13 +192,23 @@ gdp_co2_chart
 # Population
 ```{python}
 #| code-fold: true
-final_df = final_df.query("year < 2022 and year > 2000")
-chart = alt.Chart(final_df)
-chart.mark_point().encode(
-    y='co2_per_capita',
-    x='population',
+final_df=final_df.query("year>2000")
+population_chart = (alt.Chart(final_df)
+    .mark_point(color="#3498db").encode(
+    y=alt.Y('co2_per_capita', title="CO2 Emissions Per Capita (Tonnes Per Person)"),
+    x=alt.X('population', title="Population"),
     tooltip=['Name', 'co2_per_capita', 'population', 'year'] 
-).interactive()
+)
+    .properties(
+        width=900,
+        height=500,
+        title=alt.TitleParams(
+            text="CO2 Emissions Per Capita vs Population (2000-2022)",
+            fontSize=16,
+             )
+    )
+    .interactive())
+population_chart
 ```
 # Temperature
 
@@ -216,10 +228,10 @@ world_df = df2[df2["Name"] == "World"]
 #baseline co2 emissions
 co2_line = (
     alt.Chart(world_df)
-    .mark_line(color="steelblue")
+    .mark_line(color="#3498db", strokeWidth = 4)
     .encode(
         x=alt.X("year:O", title="Year"),
-        y=alt.Y("co2_per_capita:Q", title="CO₂ Emissions (million tonnes)", axis=alt.Axis(titleColor="steelblue")),
+        y=alt.Y("co2_per_capita:Q", title="CO₂ Emissions (million tonnes)", axis=alt.Axis(titleColor="#3498db")),
         tooltip=["year", "co2_per_capita"]
     )
 )
@@ -227,13 +239,13 @@ co2_line = (
 #line for temp change with second axis
 temp_line = (
     alt.Chart(world_df)
-    .mark_line(color="firebrick")
+    .mark_line(color="#e74c3c", strokeWidth=4)
     .encode(
         x="year:O",
         y=alt.Y(
             "temperature_change_from_co2:Q",
             title="Temperature Change from CO₂ (°C)",
-            axis=alt.Axis(titleColor="firebrick")
+            axis=alt.Axis(titleColor="#e74c3c")
         ),
         tooltip=["year", "temperature_change_from_co2"]
     )
@@ -242,19 +254,16 @@ temp_line = (
 #combine both lines, layered graph with two y-axes
 co2_vs_temp = alt.layer(co2_line, temp_line).resolve_scale(y='independent').properties(
     title="CO₂ Emissions vs. Temperature Change (World)",
-    width=700,
-    height=400
+    width=900,
+    height=500
 )
 
 co2_vs_temp.save('co2_vs_temp.html')
 
+co2_vs_temp
 
 
 ```
-
-<div style="display: flex; justify-content: center; width: 100%;">
-<iframe src="co2_vs_temp.html" width="620px" height="500px" style="border: none'"></iframe>
-</div>
 
 
 # Average CO2 By Country
