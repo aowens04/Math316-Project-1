@@ -95,6 +95,97 @@ world_chart
 ```
 
 # GDP
+```{python}
+#| code-fold: true
+
+# Load the CO2 emissions dataset
+df_co2 = pd.read_csv("Data.csv")
+
+# Apply filters for GDP-CO2 analysis
+df_filtered = df_co2[(df_co2["year"] >= 1950) & (df_co2["year"] <= 2023)].copy()
+df_filtered = df_filtered[df_filtered["Description"] == "Country"].copy()
+df_filtered = df_filtered[~df_filtered["Name"].str.endswith("(GCP)", na=False)].copy()
+df_filtered = df_filtered.dropna(subset=["Name", "co2", "gdp"]).copy()
+
+# Calculate global averages by year (mean across all countries)
+yearly_averages = (
+    df_filtered.groupby("year").agg({"co2": "mean", "gdp": "mean"}).reset_index()
+)
+
+# Define tick values for every 5 years from 1950-2022
+tick_values = [1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000, 2005, 2010, 2015, 2020, 2022]
+
+# CO2 chart
+co2_chart = (
+    alt.Chart(yearly_averages)
+    .mark_line(
+        color="#e74c3c", strokeWidth=4, point=alt.OverlayMarkDef(filled=True, size=50)
+    )
+    .encode(
+        x=alt.X(
+            "year:O",
+            title="Year",
+            axis=alt.Axis(
+                labelAngle=-45, values=tick_values, labelExpr="datum.value + ''"
+            ),
+        ),
+        y=alt.Y(
+            "co2:Q",
+            title="Average CO2 Emissions per Country (MtCO2)",
+            axis=alt.Axis(titleColor="#e74c3c", labelColor="#e74c3c"),
+        ),
+        tooltip=[
+            alt.Tooltip("year:O", title="Year"),
+            alt.Tooltip("co2:Q", title="Avg CO2 per Country (MtCO2)", format=",.1f"),
+            alt.Tooltip("gdp:Q", title="Avg GDP per Country (USD)", format="$.2s"),
+        ],
+    )
+)
+
+# GDP chart (independent y-axis)
+gdp_chart = (
+    alt.Chart(yearly_averages)
+    .mark_line(
+        color="#3498db",
+        strokeWidth=4,
+        strokeDash=[8, 4],
+        point=alt.OverlayMarkDef(filled=True, size=50),
+    )
+    .encode(
+        x=alt.X(
+            "year:O", axis=alt.Axis(values=tick_values, labelExpr="datum.value + ''")
+        ),
+        y=alt.Y(
+            "gdp:Q",
+            title="Average GDP per Country (USD)",
+            scale=alt.Scale(zero=False),
+            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format="$.1s"),
+        ),
+        tooltip=[
+            alt.Tooltip("year:O", title="Year"),
+            alt.Tooltip("co2:Q", title="Avg CO2 per Country (MtCO2)", format=",.1f"),
+            alt.Tooltip("gdp:Q", title="Avg GDP per Country (USD)", format="$.2s"),
+        ],
+    )
+)
+
+# Combine with independent y-axes
+gdp_co2_chart = (
+    alt.layer(co2_chart, gdp_chart)
+    .resolve_scale(y="independent")
+    .properties(
+        width=900,
+        height=500,
+        title=alt.TitleParams(
+            text="Average GDP vs CO2 per Country (1950-2022)",
+            fontSize=16,
+            anchor="start",
+        ),
+    )
+)
+
+gdp_co2_chart
+```
 
 # Population
 ```{python}
@@ -179,3 +270,81 @@ print(avg_co2_by_country)
 
 ```
 
+# Top 10 CO2 Emitters
+```{python}
+#| code-fold: true
+
+# Load the CO2 emissions data
+df_co2_pivot = pd.read_csv("Data.csv")
+
+# Apply filter
+# 1. Filter by year: 1950-2023
+df_filtered_pivot = df_co2_pivot[(df_co2_pivot["year"] >= 1950) & (df_co2_pivot["year"] <= 2023)].copy()
+
+# 2. Filter by Description: Only 'Country'
+df_filtered_pivot = df_filtered_pivot[df_filtered_pivot["Description"] == "Country"].copy()
+
+# 3. Filter by Name: Exclude strings ending with '(GCP)'
+df_filtered_pivot = df_filtered_pivot[~df_filtered_pivot["Name"].str.endswith("(GCP)", na=False)].copy()
+
+# 4. Remove rows with NaN values in our key columns
+df_filtered_pivot = df_filtered_pivot.dropna(subset=["Name", "co2", "population", "gdp"]).copy()
+
+# Create pivot table with Name as rows and co2, population, gdp as columns
+# Values represent the mean of the data
+pivot_table = df_filtered_pivot.groupby("Name").agg({
+    "co2": "mean",
+    "population": "mean", 
+    "gdp": "mean"
+}).round(2)
+
+# Sort by CO2 emissions (highest to lowest)
+pivot_table = pivot_table.sort_values("co2", ascending=False)
+
+# Get top 10 for display
+top_10_pivot = pivot_table.head(10)
+
+# Create display version with cleaned up labels
+display_table = top_10_pivot.copy()
+display_table.columns = ["Avg MtCO2", "Avg Population", "Avg GDP"]
+
+# Format for better display
+def format_number(x):
+    if pd.isna(x):
+        return "N/A"
+    elif x >= 1e12:
+        return f"${x/1e12:.1f}T"
+    elif x >= 1e9:
+        return f"${x/1e9:.1f}B"
+    elif x >= 1e6:
+        return f"${x/1e6:.1f}M"
+    else:
+        return f"${x:,.0f}"
+
+def format_population(x):
+    if pd.isna(x):
+        return "N/A"
+    elif x >= 1e9:
+        return f"{x/1e9:.2f}B"
+    elif x >= 1e6:
+        return f"{x/1e6:.1f}M"
+    else:
+        return f"{x:,.0f}"
+
+def format_co2(x):
+    if pd.isna(x):
+        return "N/A"
+    else:
+        return f"{x:,.1f}"
+
+print("PIVOT TABLE: Top 10 CO2 Emitting Countries (1950-2023)")
+print("="*80)
+print(f"{'Country':<25} {'Avg MtCO2':<15} {'Avg Population':<18} {'Avg GDP':<15}")
+print("-"*80)
+
+for country, row in display_table.iterrows():
+    co2_val = format_co2(row["Avg MtCO2"])
+    pop_val = format_population(row["Avg Population"])
+    gdp_val = format_number(row["Avg GDP"])
+    print(f"{country:<25} {co2_val:<15} {pop_val:<18} {gdp_val:<15}")
+```
