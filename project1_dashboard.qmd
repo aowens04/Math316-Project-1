@@ -22,6 +22,7 @@ import pandas as pd
 import altair as alt
 import numpy as np
 from great_tables import GT
+import matplotlib.pyplot as plt
 alt.renderers.enable('html')
 
 df = pd.read_csv("Data.csv")
@@ -32,6 +33,9 @@ df2=df[["year", "Name", "gdp", "population", "co2_per_capita", "temperature_chan
 
 world_df = df2.query("Name == 'World'")
 final_df = df2.query("Name != 'World'")
+
+regions = pd.read_csv("./country_regions.csv")
+
 
 ```
 
@@ -76,12 +80,18 @@ dict(
 ## Row 
 ```{python}
 #| code-fold: true
+world_df = df[["year", "Name", "temperature_change_from_co2"]].query("Name == 'World' and year >= 1950 ")
+x=world_df['year']
+y=world_df['temperature_change_from_co2']
+z2=np.polyfit(x,y,2)
+p2 = np.poly1d(z2)
+world_df.loc[len(world_df)]=[2070, "World", np.nan]
 source = pd.DataFrame({
     'x' : pd.to_datetime(world_df['year'], format='%Y'),
-    'y' : world_df['temperature_change_from_co2']
+    'y' : p2(world_df["year"])
 })
 
-base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4).encode(
+base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4, interpolate = "natural").encode(
     x=alt.X(
         "x:T",
         title="Year",
@@ -90,11 +100,18 @@ base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4).encode(
     y=alt.Y('y', title= 'Temp (°C)'),
 )
 
-peak_line = alt.Chart(pd.DataFrame({'y': [2]})).mark_rule(color="#e74c3c", strokeWidth=4).encode(
-    y='y',
+rect_data = pd.DataFrame([{'x1': pd.to_datetime(1950, format="%Y"), 'x2': pd.to_datetime(2070, format="%Y"), 'y1': 2, 'y2': 3}])
+highlight = alt.Chart(rect_data).mark_rect(
+    color='red', 
+    opacity=0.2
+).encode(
+    x='x1',
+    x2='x2',
+    y='y1',
+    y2='y2'
 )
 
-world_chart = (base + peak_line).properties(title="Global Temperature Change vs Time").interactive()
+world_chart = (base + highlight).properties(title="Global Temperature Change From CO2 vs Time").interactive()
 world_chart
 ```
 
@@ -193,23 +210,41 @@ gdp_co2_chart
 # Population
 ```{python}
 #| code-fold: true
-final_df=final_df.query("year>2000")
-population_chart = (alt.Chart(final_df)
+population_region_df = pd.merge(final_df, regions, how="inner", on="Name")
+population_df = population_region_df.query("year > 2016").assign(log_population = lambda x: np.log(x['population']))
+region_list = population_df['Region'].unique().tolist()
+dropdown = alt.binding_select(
+    options=region_list,
+    name='Select Region: '
+)
+
+selection = alt.selection_point(
+    fields=['Region'],  
+    bind=dropdown
+)
+population_chart = (alt.Chart(population_df)
     .mark_point(color="#3498db").encode(
     y=alt.Y('co2_per_capita', title="CO2 Emissions Per Capita (Tonnes Per Person)"),
-    x=alt.X('population', title="Population"),
-    tooltip=['Name', 'co2_per_capita', 'population', 'year'] 
+    x=alt.X('log_population', title="log(Population)"),
+    tooltip=['Name', 'co2_per_capita', 'population', 'year'], 
+    color = 'Name'
 )
     .properties(
         width=900,
         height=500,
         title=alt.TitleParams(
-            text="CO2 Emissions Per Capita vs Population (2000-2022)",
+            text="CO2 Emissions Per Capita vs Population (2017-2022)",
             fontSize=16,
              )
+    ).add_params(
+    selection
+    )
+    .transform_filter(
+        selection
     )
     .interactive())
 population_chart
+
 ```
 # Temperature
 
