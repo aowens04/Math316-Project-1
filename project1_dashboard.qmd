@@ -40,7 +40,7 @@ regions = pd.read_csv("./country_regions.csv")
 ```
 
 # Overview
-## Row {height=200px}
+## Row {height="200px"}
 ```{python}
 #| content: valuebox
 #| title: "Number of Countries:"
@@ -85,13 +85,13 @@ x=world_df['year']
 y=world_df['temperature_change_from_co2']
 z2=np.polyfit(x,y,2)
 p2 = np.poly1d(z2)
-world_df.loc[len(world_df)]=[2070, "World", np.nan]
+world_df.loc[len(world_df)]=[2070, "World", p2(2070)]
 source = pd.DataFrame({
     'x' : pd.to_datetime(world_df['year'], format='%Y'),
-    'y' : p2(world_df["year"])
+    'y' : world_df["temperature_change_from_co2"]
 })
 
-base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=4, interpolate = "natural").encode(
+base = alt.Chart(source).mark_line(color="#3498db", strokeWidth=3).encode(
     x=alt.X(
         "x:T",
         title="Year",
@@ -116,10 +116,24 @@ world_chart
 ```
 
 # GDP
+## Row {height="60px"}
+<div style="font-size: 15pt">Is higher GDP correlated to higher CO2 emissions?</div>
+
+## Row
+### {width="300px"}
+<div style="color: red">
+* Red - Avg CO2 Emissions per Country 
+</div>
+<div style="color: blue">
+* Blue - Avg GDP per Country
+</div>
+* Correlation Coefficient = 
+	* very high level of correlation
+
+###
 ```{python}
 #| code-fold: true
 
-# Load the CO2 emissions dataset
 df_co2 = pd.read_csv("Data.csv")
 
 # Apply filters for GDP-CO2 analysis
@@ -140,7 +154,7 @@ tick_values = [1950, 1955, 1960, 1965, 1970, 1975, 1980, 1985, 1990, 1995, 2000,
 co2_chart = (
     alt.Chart(yearly_averages)
     .mark_line(
-        color="#e74c3c", strokeWidth=4, point=alt.OverlayMarkDef(filled=True, size=50)
+        color="#e74c3c", strokeWidth=3
     )
     .encode(
         x=alt.X(
@@ -168,9 +182,7 @@ gdp_chart = (
     alt.Chart(yearly_averages)
     .mark_line(
         color="#3498db",
-        strokeWidth=4,
-        strokeDash=[8, 4],
-        point=alt.OverlayMarkDef(filled=True, size=50),
+        strokeWidth=3
     )
     .encode(
         x=alt.X(
@@ -180,7 +192,7 @@ gdp_chart = (
             "gdp:Q",
             title="Average GDP per Country (USD)",
             scale=alt.Scale(zero=False),
-            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format="$.0f", 		    labelExpr="'$' + datum.value/1000000000 + 'B'"),
+            axis=alt.Axis(titleColor="#3498db", labelColor="#3498db", format="$.0f", labelExpr="'$' + datum.value/1000000000 + 'B'"),
         ),
         tooltip=[
             alt.Tooltip("year:O", title="Year"),
@@ -196,7 +208,7 @@ gdp_co2_chart = (
     .resolve_scale(y="independent")
     .properties(
         width=900,
-        height=500,
+        height=450,
         title=alt.TitleParams(
             text="Average GDP vs CO2 per Country (1950-2022)",
             fontSize=16,
@@ -208,6 +220,16 @@ gdp_co2_chart
 ```
 
 # Population
+
+## Row {height="60px"}
+<div style="font-size: 15pt">Is population correlated to higher CO2 emissions per capita?</div>
+
+## Row 
+### {width="300px"}
+* No clear relationship in the data
+* Indicates there is no reason to believe that population has an impact on per capita emissions
+
+###
 ```{python}
 #| code-fold: true
 population_region_df = pd.merge(final_df, regions, how="inner", on="Name")
@@ -218,36 +240,66 @@ dropdown = alt.binding_select(
     name='Select Region: '
 )
 
-selection = alt.selection_point(
+dropdown_selection = alt.selection_point(
     fields=['Region'],  
     bind=dropdown
 )
-population_chart = (alt.Chart(population_df)
-    .mark_point(color="#3498db").encode(
-    y=alt.Y('co2_per_capita', title="CO2 Emissions Per Capita (Tonnes Per Person)"),
-    x=alt.X('log_population', title="log(Population)"),
-    tooltip=['Name', 'co2_per_capita', 'population', 'year'], 
-    color = 'Name'
+
+click_selection = alt.selection_point(fields=['Region'])
+hover_selection = alt.selection_point(
+    on="mouseover", fields=['Name'], empty=False
 )
+
+population_chart = (
+    alt.Chart(population_df)
+    .mark_circle()
+    .encode(
+        y=alt.Y('co2_per_capita', title="CO2 Emissions Per Capita (Tonnes Per Person)"),
+        x=alt.X('log_population', title="log(Population)"),
+        tooltip=['Name', 'co2_per_capita', 'population', 'year'], 
+        color = alt.when(hover_selection)
+            .then(alt.value("red"))
+            .otherwise(
+                alt.Color("Region:N")
+            ),
+        size=alt.when(hover_selection)
+            .then(alt.value(300))
+            .when(click_selection)
+            .then(alt.value(100))
+            .otherwise(alt.value(50)),
+        opacity=alt.when(hover_selection)
+            .then(alt.value(1))
+            .when(click_selection)
+            .then(alt.value(1))
+            .otherwise(alt.value(0.3))
+    )
     .properties(
         width=900,
-        height=500,
+        height=450,
         title=alt.TitleParams(
             text="CO2 Emissions Per Capita vs Population (2017-2022)",
             fontSize=16,
              )
-    ).add_params(
-    selection
+    )
+    .add_params(
+    click_selection, hover_selection, dropdown_selection
     )
     .transform_filter(
-        selection
+        dropdown_selection
     )
     .interactive())
 population_chart
 
 ```
 # Temperature
+## Row {height="60px"}
+<div style="font-size: 15pt"> Are CO2 emissions related to higher temperatures? </div>
 
+## Row
+### {width="400px"}
+* [placeholder]
+
+###
 ```{python}
 
 #temp vs co2 for the world
@@ -264,7 +316,7 @@ world_df = df2[df2["Name"] == "World"]
 #baseline co2 emissions
 co2_line = (
     alt.Chart(world_df)
-    .mark_line(color="#3498db", strokeWidth = 4)
+    .mark_line(color="#3498db", strokeWidth = 3)
     .encode(
         x=alt.X("year:O", title="Year"),
         y=alt.Y("co2_per_capita:Q", title="CO₂ Emissions (million tonnes)", axis=alt.Axis(titleColor="#3498db")),
@@ -275,7 +327,7 @@ co2_line = (
 #line for temp change with second axis
 temp_line = (
     alt.Chart(world_df)
-    .mark_line(color="#e74c3c", strokeWidth=4)
+    .mark_line(color="#e74c3c", strokeWidth=3)
     .encode(
         x="year:O",
         y=alt.Y(
@@ -291,7 +343,7 @@ temp_line = (
 co2_vs_temp = alt.layer(co2_line, temp_line).resolve_scale(y='independent').properties(
     title="CO₂ Emissions vs. Temperature Change (World)",
     width=900,
-    height=500
+    height=450
 )
 
 co2_vs_temp.save('co2_vs_temp.html')
