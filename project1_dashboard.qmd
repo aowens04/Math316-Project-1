@@ -120,15 +120,19 @@ world_chart
 <div style="font-size: 15pt">Is higher GDP correlated to higher CO2 emissions?</div>
 
 ## Row
-### {width="300px"}
+### {width="400px"}
 <div style="color: red">
 * Red - Avg CO2 Emissions per Country 
 </div>
 <div style="color: blue">
 * Blue - Avg GDP per Country
 </div>
-* Correlation Coefficient = 
-	* very high level of correlation
+
+| Metric | Value | Interpretation |
+|:---:|:---:|:---:|
+| GDP-CO2 Correlation | 0.964 | Exceptionally strong relationship |
+| GDP Growth (1950-2022) | 1,186% | 12x increase in average GDP |
+| CO2 Growth (1950-2022) | 414% | 5x increase in average emissions |
 
 ###
 ```{python}
@@ -297,7 +301,17 @@ population_chart
 
 ## Row
 ### {width="400px"}
-* [placeholder]
+<div style="color: blue">
+* Blue - CO2 Emissions
+</div>
+<div style="color: red">
+* Red - Global Temperature Change
+</div>
+| Metric | Value | Interpretation |
+|:---:|:---:|:---:|
+| GDP-CO2 Correlation | 0.84 | Strong relationship |
+| Temp Change (1960-2022) | 292% | 2x increase in average temperature change |
+| CO2 Growth Per Capita (1960-2022) | 95% | Increase in per capita emissions |
 
 ###
 ```{python}
@@ -307,37 +321,41 @@ population_chart
 #World data only
 world_df = df2[df2["Name"] == "World"]
 
-
-#drop rows with missing values for variables
-#world_df = world_df.dropna(subset=["year", "co2", "temperature_change_from_co2"])
-
-#world_df=world_df[["year", "co2", "temperature_change_from_co2"]].query("year > 1950")
+source = pd.DataFrame({
+    'x': pd.to_datetime(world_df['year'], format="%Y"),
+    'y': world_df['co2_per_capita']
+})
 
 #baseline co2 emissions
 co2_line = (
-    alt.Chart(world_df)
+    alt.Chart(source)
     .mark_line(color="#3498db", strokeWidth = 3)
     .encode(
-        x=alt.X("year:O", title="Year"),
-        y=alt.Y("co2_per_capita:Q", title="CO₂ Emissions (million tonnes)", axis=alt.Axis(titleColor="#3498db")),
-        tooltip=["year", "co2_per_capita"]
+        x=alt.X('x:T', title="Year", axis=alt.Axis(format='%Y')),
+        y=alt.Y('y:Q', title="CO₂ Emissions (million tonnes)", axis=alt.Axis(titleColor="#3498db")),
+        tooltip=[alt.Tooltip('x:T', title='Year', format='%Y'), alt.Tooltip('y:Q', title='CO₂ per capita')]
     )
 )
 
+source = pd.DataFrame({
+    'x': pd.to_datetime(world_df['year'], format="%Y"),
+    'y': world_df['temperature_change_from_co2']
+})
 #line for temp change with second axis
 temp_line = (
-    alt.Chart(world_df)
+    alt.Chart(source)
     .mark_line(color="#e74c3c", strokeWidth=3)
     .encode(
-        x="year:O",
+        x=alt.X('x:T', axis=alt.Axis(format='%Y')),
         y=alt.Y(
-            "temperature_change_from_co2:Q",
+            "y:Q",
             title="Temperature Change from CO₂ (°C)",
             axis=alt.Axis(titleColor="#e74c3c")
         ),
-        tooltip=["year", "temperature_change_from_co2"]
+        tooltip=[alt.Tooltip('x:T', title='Year', format='%Y'), alt.Tooltip('y:Q', title='Temperature Change')]
     )
 )
+
 
 #combine both lines, layered graph with two y-axes
 co2_vs_temp = alt.layer(co2_line, temp_line).resolve_scale(y='independent').properties(
@@ -346,11 +364,7 @@ co2_vs_temp = alt.layer(co2_line, temp_line).resolve_scale(y='independent').prop
     height=450
 )
 
-co2_vs_temp.save('co2_vs_temp.html')
-
 co2_vs_temp
-
-
 ```
 
 
